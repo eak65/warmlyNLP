@@ -3,10 +3,11 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 
-from flask import Flask,jsonify,request
+from flask import Flask,jsonify,request,json
 from gsearch.googlesearch import search
 from newspaper import Article
 import nltk
+import platform
 nltk.download('punkt')
 app = Flask(__name__)
 
@@ -16,22 +17,40 @@ wsgi_app = app.wsgi_app
 
 @app.route('/')
 def hello():
+    print(platform.python_version())
     """Renders a sample page."""
-    return "Hello World!"
+    return "Hello World!" 
 
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
-	term = request.args.get('term')
-	results = search(term)
-	return jsonify(results)
+    term = request.args.get('term')
+    results = search(term,num_results=5)
+    thislist = []
+
+    for l in results:
+        print("Resource: " + l[1])
+        try:
+            article = analyze(l[1])
+            thislist.append({'url':l[1],'summary':article.summary,'keywords':article.keywords,'published date':article.publish_date})
+        except:
+            print("result Failed")
+    jsonStr = json.dumps(thislist)
+    return jsonify(results=thislist)
 
 
 
 @app.route('/api/1.0/search', methods=['GET'])
-def get_tasks():
-    url = request.args.get('url')
-    print(url)
-    article = Article(url)
+def analyze_url():
+    try:    
+        url = request.args.get('url')
+    except:
+        print("error")
+    return analyze(url)
+   
+
+def analyze(resource):
+    print("received " + resource)
+    article = Article(resource)
     print("Article")
     print(article)
 
@@ -58,9 +77,8 @@ def get_tasks():
 	#7. Generate Summary of the article
     print("Article Summary")
     print(article.summary)
-
-    return jsonify({'authors': article.authors,'keywords':article.keywords,'summary':article.summary})
-
+    return article;
+ 
 
 if __name__ == '__main__':
     import os
