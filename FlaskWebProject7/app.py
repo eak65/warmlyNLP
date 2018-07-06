@@ -7,8 +7,12 @@ from flask import Flask,jsonify,request,json
 from gsearch.googlesearch import search
 from newspaper import Article
 import nltk
+import re
+import sys
 import platform
-nltk.download('punkt')
+from nltk.corpus import stopwords
+nltk.download('popular')
+stop = stopwords.words('english')
 app = Flask(__name__)
 
 # Make the WSGI interface available at the top level so wfastcgi can get it.
@@ -31,10 +35,14 @@ def get_articles():
         print("Resource: " + l[1])
         try:
             article = analyze(l[1])
+            print("Summary" + article.summary)
+            print("TEXT____ " + article.text)
+            #names = extract_entities(article.text)
             thislist.append({'url':l[1],'summary':article.summary,'keywords':article.keywords,'published date':article.publish_date})
-        except:
-            print("result Failed")
-    jsonStr = json.dumps(thislist)
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print (message)
     return jsonify(results=thislist)
 
 
@@ -78,7 +86,14 @@ def analyze(resource):
     print("Article Summary")
     print(article.summary)
     return article;
+
  
+def extract_entities(text):
+    names = []
+    for sent in nltk.sent_tokenize(text):
+        for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
+            if hasattr(chunk, 'node'):
+                names.append(chunk.node, ' '.join(c[0] for c in chunk.leaves()))
 
 if __name__ == '__main__':
     import os
