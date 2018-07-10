@@ -24,7 +24,7 @@ def hello():
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
     term = request.args.get('term')
-    results = search(term,num_results=5)
+    results = search(term,num_results=5,news=True)
     thislist = []
 
     for l in results:
