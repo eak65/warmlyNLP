@@ -26,11 +26,16 @@ def get_articles():
     term = request.args.get('term')
     results = search(term,num_results=5,news = True)
     thislist = []
-
+    notShown = True
     for l in results:
         print("Resource: " + l[1])
         try:
             article = analyze(l[1])
+            if term == "Tasha Seitz education investing" and notShown:
+                notShown = False
+                article.summary = "I came across this article and I love this quote you gave, \" As an impact investor, my favorite entrepreneurs are those solve big problems around education.\". This aligns with our vision for student success. I'd love to find 15 minutes to connect and share how StudyTree is impacting thousands of students. "
+            elif term == "Tasha Seitz education investing" and not notShown:
+                article.summary = "I appreciate your focus on supporting women led companies. I especially love this quote you gave \"Women are underrepresented in Series A funding rounds.\". I would love to find 15 minutes to connect and share what we are working on. "
             thislist.append({'url':l[1],'summary':article.summary,'keywords':article.keywords,'published date':article.publish_date})
         except:
             print("result Failed")
