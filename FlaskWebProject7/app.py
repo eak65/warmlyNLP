@@ -21,11 +21,19 @@ app = Flask(__name__)
 wsgi_app = app.wsgi_app
 
 
-@app.route('/')
+@app.route('/api/1.0/test',methods=['GET'])
 def hello():
     print(platform.python_version())
     """Renders a sample page."""
-    return "Hello World!" 
+    return jsonify({
+'target': 'John Fritz',
+'identifiers':['UMBC','education technology'],
+'connectors': ['student', 'success','graduation'],
+'synonym':[{'root':'success','syn':['achievement',"accomplishment","winning"]},{'root':'graduation','syn':['commencement','convocation']}],
+'mips':[{'m':'string','r':'string'}],
+'radar':{'label':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
+'snippet': 'test message'
+})
 
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
@@ -122,6 +130,14 @@ def analyze(resource):
     article.nlp()
 
     return article;
+
+
+def generateMips(articles, topics):
+	#for()
+   # sent_tokenized = nltk.sent_tokenize(text)
+
+	return;
+
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
     pool = mp.Pool(processes = 1)

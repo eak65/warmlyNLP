@@ -36,6 +36,7 @@
     <Content Include="requirements.txt" />
     <None Include="warmly2 - Web Deploy.pubxml" />
     <None Include="warmly2 - Web Deploy1.pubxml" />
+    <None Include="warmly2 - Web Deploy2.pubxml" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
