@@ -30,8 +30,10 @@ wsgi_app = app.wsgi_app
 @app.route('/')
 def test():
     temp_file = datapath('method1Model')
-    lda = gensim.models.wrappers.LdaMallet.load(temp_file)
-    dictionary = corpora.Dictionary.load("method1.pkl")
+    lda = None
+    dictionary = None
+    #lda = gensim.models.wrappers.LdaMallet.load(temp_file)
+    #dictionary = corpora.Dictionary.load("method1.pkl")
     article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
     artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
     result = mip.getRankedTextFromTopic(article, ('Ethan', 'Phan'), ['war', 'politic', 'kill'], None, lda, dictionary, None)

@@ -114,7 +114,7 @@ def getRankedTextFromTopic(article, target, topics, coref_NLP, LDA_Model, LDA_Di
   mentioned_sentences = [sent for sent in coref_sentences if containsTarget(sent, target[0], target[1])]
 
   # Get predictions
-  predictions = [predictTopicOnSentence(sent, LDA_Model, LDA_Dict) for sent in mentioned_sentences]
+  #predictions = [predictTopicOnSentence(sent, LDA_Model, LDA_Dict) for sent in mentioned_sentences]
 
   # First, go through all sentences and check if it directly has any word / similar words in the topics.
   # Assign score for each sentence / topic pair
