@@ -34,7 +34,7 @@ dictionary = corpora.Dictionary.load("method2Dictionary.gensim")
 def test():
     article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
     artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
-    result = mip.getRankedTextFromTopic(article, ('Ethan', 'Phan'), ['war', 'politic', 'kill'], None, lda, dictionary, None)
+    result = mip.getRankedTextFromTopic(article, ('Ethan', None), ['war', 'politic', 'kill'], None, lda, dictionary, None)
     for topic in result:
         result[topic] = [[l, "www"] for l in  [sent[0] for sent in result[topic]]]
     return "Hello World!"  

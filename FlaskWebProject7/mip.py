@@ -65,8 +65,9 @@ def predictTopicOnSentence(sentence, model, dictionary):
 def containsTarget(sent, firstName, lastName):
   lower = sent.lower()
   first_lower = firstName.lower()
-  last_lower = lastName.lower()
-  return lower.find(first_lower) >= 0 or lower.find(last_lower) >= 0
+  last_lower = None
+  if lastName != None : last_lower = lastName.lower()
+  return lower.find(first_lower) >= 0 or (last_lower != None and lower.find(last_lower) >= 0)
 
 def getWordSimilarity(word1, word2, pos='n'):
   if (word1 == word2):
