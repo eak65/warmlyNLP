@@ -24,18 +24,26 @@ def sent_to_words(sentences):
   for sentence in sentences:
       yield(gensim.utils.simple_preprocess(str(sentence), deacc=True))  # deacc=True removes punctuations
 
-def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
-  texts_out = []
-  for sent in texts:
-      doc = nlp(" ".join(sent)) 
-      texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
+def lemmatization(sent, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
+  doc = nlp(sent)
+  tokens = [token.lemma_ for token in doc if token.pos_ in allowed_postags]
+  text_out = ""
+  for token in tokens:
+    text_out += token
+    text_out += " "
+  return text_out
+
+  #for sent in texts:
+  #    doc = nlp(" ".join(sent)) 
+  #    texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
   return texts_out
 
 def lemmatize_stemming(text):
-  return stemmer.stem(WordNetLemmatizer().lemmatize(text, pos='v'))
+  return stemmer.stem(text)
 
 def preprocess(text):
   result = []
+  text = lemmatization(text)
   for token in gensim.utils.simple_preprocess(text):
       if token not in gensim.parsing.preprocessing.STOPWORDS and len(token) > 3:
           result.append(lemmatize_stemming(token))
@@ -77,13 +85,14 @@ def findTopicInSentence(sentences, topics):
           result[token.text].append(indx)
   return result
 
-def findTopicInPrediction(predictions, topics, prevResult, top = 3):
+def findTopicInPrediction(model, id2word, predictions, topics, prevResult, top = 3):
   for indx, prediction in enumerate(predictions):
     count = 0
     for topicId, score in sorted(prediction, key=lambda tup: -1*tup[1]):
       if count > top : break
       count = count + 1
-      for keyword, keyword_score in show_topic(topicId):
+      topic_keywords = [id2word[tup[0]] for tup in model.get_topic_terms(topicId)]
+      for keyword in topic_keywords:
         if keyword in topics:
           if not keyword in prevResult : prevResult[keyword] = []
           if not indx in prevResult[keyword] : prevResult[keyword].append(indx)
@@ -94,7 +103,7 @@ def getTextForResult(resultDict, sentences):
     subStr = []
     for indx in resultDict[topic]:
       if indx < len(sentences):
-        subStr.append(sentences[indx])
+        subStr.append([sentences[indx]])
     resultDict[topic] = subStr
   return resultDict
 
@@ -114,7 +123,7 @@ def getRankedTextFromTopic(article, target, topics, coref_NLP, LDA_Model, LDA_Di
   mentioned_sentences = [sent for sent in coref_sentences if containsTarget(sent, target[0], target[1])]
 
   # Get predictions
-  #predictions = [predictTopicOnSentence(sent, LDA_Model, LDA_Dict) for sent in mentioned_sentences]
+  predictions = [predictTopicOnSentence(sent, LDA_Model, LDA_Dict) for sent in mentioned_sentences]
 
   # First, go through all sentences and check if it directly has any word / similar words in the topics.
   # Assign score for each sentence / topic pair
@@ -122,7 +131,7 @@ def getRankedTextFromTopic(article, target, topics, coref_NLP, LDA_Model, LDA_Di
 
   # Then, go through all sentence and check if the processed topic has any similarity with topics
   # Readjust score
-  #result = findTopicInPrediction(predictions, topics, result)
+  result = findTopicInPrediction(LDA_Model, LDA_Dict, predictions, topics, result)
 
   # Compress result and return
   newResult = getTextForResult(result, mentioned_sentences)

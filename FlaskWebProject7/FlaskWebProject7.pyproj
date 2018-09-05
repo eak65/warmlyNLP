@@ -29,11 +29,19 @@
   <ItemGroup>
     <Compile Include="app.py" />
     <Compile Include="mip.py" />
+    <Compile Include="modelTraining.py" />
     <Compile Include="test1.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="corpus_headline.mm" />
+    <Content Include="corpus_headline.mm.index" />
+    <Content Include="method2Dictionary.gensim" />
+    <Content Include="method2Model.gensim" />
+    <Content Include="method2Model.gensim.expElogbeta.npy" />
+    <Content Include="method2Model.gensim.id2word" />
+    <Content Include="method2Model.gensim.state" />
     <Content Include="requirements.txt" />
     <None Include="warmly2 - Web Deploy.pubxml" />
     <None Include="warmly2 - Web Deploy1.pubxml" />

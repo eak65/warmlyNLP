@@ -27,16 +27,16 @@ app = Flask(__name__)
 # Make the WSGI interface available at the top level so wfastcgi can get it.
 wsgi_app = app.wsgi_app
 
+lda = gensim.models.ldamodel.LdaModel.load("method2Model.gensim")
+dictionary = corpora.Dictionary.load("method2Dictionary.gensim")
+
 @app.route('/')
 def test():
-    temp_file = datapath('method1Model')
-    lda = None
-    dictionary = None
-    #lda = gensim.models.wrappers.LdaMallet.load(temp_file)
-    #dictionary = corpora.Dictionary.load("method1.pkl")
     article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
     artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
     result = mip.getRankedTextFromTopic(article, ('Ethan', 'Phan'), ['war', 'politic', 'kill'], None, lda, dictionary, None)
+    for topic in result:
+        result[topic] = [[l, "www"] for l in  [sent[0] for sent in result[topic]]]
     return "Hello World!"  
 
 @app.route('/api/1.0/test',methods=['GET'])
@@ -150,11 +150,14 @@ def analyze(resource):
     return article;
 
 
-def generateMips(articles, topics):
-	#for()
+def generateMips(articles, firstName, lastName, topics):
+    for article in articles:
+        result = mip.getRankedTextFromTopic(article.text, (firstName, lastName), topics, None, lda, dictionary, None)
+        for topic in result:
+            result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
+    return result
    # sent_tokenized = nltk.sent_tokenize(text)
-
-	return;
+   #return;
 
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
