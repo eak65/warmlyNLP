@@ -70,8 +70,8 @@ def containsTarget(sent, firstName, lastName):
   return lower.find(first_lower) >= 0 or (last_lower != None and lower.find(last_lower) >= 0)
 
 def getWordSimilarity(word1, word2, pos='n'):
-  if (word1 == word2):
-    return 1
+  if (nltk.edit_distance(word1, word2)) < 2:
+      return 1
   return 0
 
 def findTopicInSentence(sentences, topics):
@@ -80,13 +80,14 @@ def findTopicInSentence(sentences, topics):
   for indx, doc in  enumerate(tokenized_words):
     for token in doc:
       for topic in topics:
-        score = getWordSimilarity(token.text, topic, token.pos_)
+        score = getWordSimilarity(token.text, stemmer.stem(topic), token.pos_)
         if score > 0.5:
-          if not token.text in result : result[topic] = []
-          result[token.text].append(indx)
+          if not topic in result : result[topic] = []
+          if indx not in result[topic] : result[topic].append(indx)
+          #result[topic].append(indx)
   return result
 
-def findTopicInPrediction(model, id2word, predictions, topics, prevResult, top = 3):
+def findTopicInPrediction(model, id2word, predictions, topics, prevResult, top = 5):
   for indx, prediction in enumerate(predictions):
     count = 0
     for topicId, score in sorted(prediction, key=lambda tup: -1*tup[1]):
@@ -94,9 +95,13 @@ def findTopicInPrediction(model, id2word, predictions, topics, prevResult, top =
       count = count + 1
       topic_keywords = [id2word[tup[0]] for tup in model.get_topic_terms(topicId)]
       for keyword in topic_keywords:
-        if keyword in topics:
-          if not keyword in prevResult : prevResult[keyword] = []
-          if not indx in prevResult[keyword] : prevResult[keyword].append(indx)
+          for t in topics:
+              if getWordSimilarity(stemmer.stem(t), keyword) > 0.5:
+                  if not t in prevResult : prevResult[t] = []
+                  if not indx in prevResult[t] : prevResult[t].append(indx)
+        #if keyword in topics:
+        #  if not keyword in prevResult : prevResult[keyword] = []
+        #  if not indx in prevResult[keyword] : prevResult[keyword].append(indx)
   return prevResult
 
 def getTextForResult(resultDict, sentences):
@@ -118,7 +123,8 @@ def getRankedTextFromTopic(article, target, topics, coref_NLP, LDA_Model, LDA_Di
   doc = coref_NLP(article)
   coref_article = article
   if doc._.has_coref : coref_article = doc._.coref_resolved
-  coref_sentences = nltk.sent_tokenize(coref_article)
+  coref_sentences = re.split('\s{2,}',coref_article)
+  #coref_sentences = nltk.sent_tokenize(coref_article)
 
   # first pass, find all mentioned / direct quotes.
   mentioned_sentences = [sent for sent in coref_sentences if containsTarget(sent, target[0], target[1])]
