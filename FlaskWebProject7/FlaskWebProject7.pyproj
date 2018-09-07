@@ -16,7 +16,7 @@
     <SuppressCollectPythonCloudServiceFiles>true</SuppressCollectPythonCloudServiceFiles>
     <Name>FlaskWebProject7</Name>
     <RootNamespace>FlaskWebProject7</RootNamespace>
-    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>Global|PythonCore|3.6</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,11 +28,28 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.py" />
+    <Compile Include="mip.py" />
+    <Compile Include="modelTraining.py" />
     <Compile Include="test1.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="article_merge_corp2.mm" />
+    <Content Include="article_merge_corp2.mm.index" />
+    <Content Include="article_merge_dict2.gensim" />
+    <Content Include="article_model.gensim" />
+    <Content Include="article_model.gensim.expElogbeta.npy" />
+    <Content Include="article_model.gensim.id2word" />
+    <Content Include="article_model.gensim.state" />
+    <Content Include="article_model.gensim.state.sstats.npy" />
+    <Content Include="corpus_headline.mm" />
+    <Content Include="corpus_headline.mm.index" />
+    <Content Include="method2Dictionary.gensim" />
+    <Content Include="method2Model.gensim" />
+    <Content Include="method2Model.gensim.expElogbeta.npy" />
+    <Content Include="method2Model.gensim.id2word" />
+    <Content Include="method2Model.gensim.state" />
     <Content Include="requirements.txt" />
     <None Include="warmly2 - Web Deploy.pubxml" />
     <None Include="warmly2 - Web Deploy1.pubxml" />
@@ -40,15 +57,7 @@
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="env\">
-      <Id>env</Id>
-      <Version>3.6</Version>
-      <Description>env (Python 3.6 (64-bit))</Description>
-      <InterpreterPath>Scripts\python.exe</InterpreterPath>
-      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
-      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
-      <Architecture>X64</Architecture>
-    </Interpreter>
+    <InterpreterReference Include="Global|PythonCore|3.6" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Web.targets" />
   <!-- Specify pre- and post-build commands in the BeforeBuild and 

@@ -30,7 +30,7 @@ def hello():
 'identifiers':['UMBC','education technology'],
 'connectors': ['student', 'success','graduation'],
 'synonym':[{'root':'success','syn':['achievement',"accomplishment","winning"]},{'root':'graduation','syn':['commencement','convocation']}],
-'mips':[{'m':'string','r':'string'}],
+'mips':[{'m':'string','c':{'relevance':.92,'mentions':['mention string 1', 'mention string 2'],'snippet': "string", 'quotes': ['quote string 1', 'quote string 2'], 'url':'url string','summary':'summary','keywords':['k1','k2'],'published date':'date'}}],
 'radar':{'label':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
 'snippet': 'test message'
 })
@@ -130,6 +130,14 @@ def analyze(resource):
     article.nlp()
 
     return article;
+
+
+def generateMips(articles, topics):
+	#for()
+   # sent_tokenized = nltk.sent_tokenize(text)
+
+	return;
+
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
     pool = mp.Pool(processes = 1)

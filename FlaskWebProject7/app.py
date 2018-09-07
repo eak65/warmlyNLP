@@ -13,13 +13,39 @@ import platform
 import re
 import sys
 import random
-
+import mip
+from nltk.corpus import wordnet
+   
+import gensim
+import gensim.corpora as corpora
+from gensim.utils import simple_preprocess
+from gensim.models import CoherenceModel
+from gensim.test.utils import datapath
+nltk.download('wordnet')
 nltk.download('punkt')
 app = Flask(__name__)
 
 # Make the WSGI interface available at the top level so wfastcgi can get it.
 wsgi_app = app.wsgi_app
 
+lda = gensim.models.ldamodel.LdaModel.load("article_model.gensim")
+dictionary = corpora.Dictionary.load("article_merge_dict2.gensim")
+
+@app.route('/')
+def test():
+    article = Article("https://www.edweek.org/ew/articles/2018/09/05/the-keys-to-student-success-include-starting.html")
+    #article = Article("http://blogs.edweek.org/edweek/campaign-k-12/2018/08/john-mccain-education-work-school-choice-NCLB-native-americans.html")
+    article = Article("https://www.livemint.com/AI/Z4iukEGG8HXCGxebkrud7N/Courseras-Andrew-Ng-dreams-of-AI-powered-local-solutions.html")
+    article.download()
+    article.parse()
+    #article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
+    #artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
+    dict, totalList = generateSynonyms(['student', 'politic', 'education', 'student', 'success'])   
+    result = mip.getRankedTextFromTopic(article.text, ('John', 'McCain'), totalList, None, lda, dictionary, None)
+    for topic in result:
+        result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
+        #result[topic] = [[l, "www"] for l in  [sent[0] for sent in result[topic]]]
+    return "Hello World!"
 
 @app.route('/api/1.0/test',methods=['GET'])
 def hello():
@@ -30,26 +56,60 @@ def hello():
 'identifiers':['UMBC','education technology'],
 'connectors': ['student', 'success','graduation'],
 'synonym':[{'root':'success','syn':['achievement',"accomplishment","winning"]},{'root':'graduation','syn':['commencement','convocation']}],
-'mips':[{'m':'string','r':'string'}],
-'radar':{'label':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
+'mips':[{'m':'string','c':{'relevance':.92,'mentions':['mention string 1', 'mention string 2'],'snippet': "string", 'quotes': ['quote string 1', 'quote string 2'], 'url':'url string','summary':'summary','keywords':['k1','k2'],'published date':'date'}}],
+'radar':{'labels':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
 'snippet': 'test message'
 })
-
+# /api/1.0/articles?target=ethan%20Keiser&closing=&connectors=student,success,education&identifiers=startup,edtech
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
+    response = {}
     target = request.args.get('target')
+
     closing = request.args.get('closing')
     connectorList = []
+    identifiers = []
     try:
         connectorList = request.args.get('connectors').split(",")
+        identifiers = request.args.get('identifiers').split(",")
     except:
         print("split on connector failed");
+
+    targetList = target.split(" ")
+    firstname =''
+    lastname = ''
+
+    if(len(targetList)==2):
+        firstname = targetList[0]
+        lastname = targetList[1]
+    else:
+        firstname = targetList[0]
+
     searchQuery = target
-    for connector in connectorList:
-        searchQuery +=" "+connector
+    for identifier in identifiers:
+        searchQuery +=" "+identifier
+
+    response['target'] = target
+    response['connectors'] = connectorList
+    response['identifiers'] = identifiers
+
+    dict, totalList = generateSynonyms(connectorList)   
+    response['synonym'] = []
+
+    for connector in connectorList :
+       response['synonym'].append({'root': connector, 'syn' : dict[connector]})
+
+
     results = search(searchQuery,num_results=10,news = False)
     results.extend(search(searchQuery,num_results=5,news = True))
     cleanSearchResults(results)
+    articleList = []
+    for l in results:
+        articleList.append(analyze(l[1]))
+
+    generateMips(articleList, firstname, lastname,totalList)
+
+
     thislist = []
     notShown = True
     for l in results:
@@ -132,12 +192,33 @@ def analyze(resource):
     return article;
 
 
-def generateMips(articles, topics):
-	#for()
+def generateMips(articles, firstName, lastName, topics):
+    for article in articles:
+        result = mip.getRankedTextFromTopic(article.text, (firstName, lastName), topics, None, lda, dictionary, None)
+        for topic in result:
+            result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
+    return result
    # sent_tokenized = nltk.sent_tokenize(text)
+   #return;
 
-	return;
+def generateSynonyms(words):
+    try:
+        result = {}
+        totalSynonyms = []     
+        for w in words:
+            synonyms = []     
+            for syn in wordnet.synsets(w):
+                for l in syn.lemmas():
+                    synonyms.append(l.name().lower())
+                    totalSynonyms.append(l.name().lower())
+            result[w] = list(set(synonyms))
 
+            while w in result[w]: result[w].remove(w)    
+
+
+    except Exception as e:
+        print(traceback.format_exception(*sys.exc_info()))
+    return result, list(set(totalSynonyms))
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
     pool = mp.Pool(processes = 1)
