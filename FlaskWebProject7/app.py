@@ -57,10 +57,10 @@ def hello():
 'connectors': ['student', 'success','graduation'],
 'synonym':[{'root':'success','syn':['achievement',"accomplishment","winning"]},{'root':'graduation','syn':['commencement','convocation']}],
 'mips':[{'m':'string','c':{'relevance':.92,'mentions':['mention string 1', 'mention string 2'],'snippet': "string", 'quotes': ['quote string 1', 'quote string 2'], 'url':'url string','summary':'summary','keywords':['k1','k2'],'published date':'date'}}],
-'radar':{'labels':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
+'radar':{'labels':['student','success','graduation'],'datasets':[{'data':[51,25,39]}]},
 'snippet': 'test message'
 })
-# /api/1.0/articles?target=ethan%20Keiser&closing=&connectors=student,success,education&identifiers=startup,edtech
+# /api/1.0/articles?target=John%20Fritz&closing=&connectors=student,success,education&identifiers=UMBC
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
     response = {}
@@ -95,56 +95,52 @@ def get_articles():
 
     dict, totalList = generateSynonyms(connectorList)   
     response['synonym'] = []
-
+    radarData = []
     for connector in connectorList :
        response['synonym'].append({'root': connector, 'syn' : dict[connector]})
+       radarData.append(random.uniform(0, 1)*10)
 
 
-    results = search(searchQuery,num_results=10,news = False)
+
+    results = search(searchQuery,num_results=10, news = False)
     results.extend(search(searchQuery,num_results=5,news = True))
     cleanSearchResults(results)
     articleList = []
     for l in results:
-        articleList.append(analyze(l[1]))
-
-    generateMips(articleList, firstname, lastname,totalList)
-
-
-    thislist = []
-    notShown = True
-    for l in results:
-        print("Resource: " + l[1])
         try:
-            article = analyze(l[1])
-            # timeout(analyze(l[1]), kwds = {'x': 'Hi'}, timeout = 3, default = 'Bye')
-            if target == "Tasha Seitz" and notShown:
-                notShown = False
-                article.summary = "I came across this article and I love this quote you gave, \" As an impact investor, my favorite entrepreneurs are those solve big problems around education.\". This aligns with our vision for student success. I'd love to find 15 minutes to connect and share how StudyTree is impacting thousands of students. "
-            elif target == "Tasha Seitz" and not notShown:
-                article.summary = "I appreciate your focus on supporting women led companies. I especially love this quote you gave \"Women are underrepresented in Series A funding rounds.\". I would love to find 15 minutes to connect and share what we are working on. "
-            
-            snippet, directReferences, mentions = generateSnippet(target, article.text, closing)
-            val = random.uniform(0, 1)*.1
-            if(len(snippet)>0):
-                val+=.3
-            if(len(directReferences)>0):
-                val+=.2
-            if(len(mentions)>0):
-                val+=.3
-            if(len(article.summary)>0):
-                val+=.1
-
-
-            thislist.append({'relevance':val,'mentions':mentions,'snippet': snippet, 'quotes': directReferences, 'url':l[1],'summary':article.summary,'keywords':article.keywords,'published date':article.publish_date})
-            #if(len(snippet) == 0):
-            #  generateSnippet = "Not enough data to create personalized message."
-            #   directReferences = "No quotes found."
+            articleList.append(analyze(l[1]))
         except:
-            print("result Failed ")
+            print('error')
 
-    thislist.sort(key=lambda x: x['relevance'], reverse=True)
-    jsonStr = json.dumps(thislist)
-    return jsonify(results=thislist)
+    mipsResults = generateMips(articleList, firstname, lastname, totalList)
+    mipsList = []
+    for t in totalList:
+        try:
+            value = mipsResults[t]
+            for ob in value:
+                article = analyze(ob[1])
+                snippet, directReferences, mentions = generateSnippet(target, article.text, closing)
+                val = random.uniform(0, 1)*.1
+                if(len(snippet)>0):
+                    val+=.3
+                if(len(directReferences)>0):
+                    val+=.2
+                if(len(mentions)>0):
+                    val+=.3
+                if(len(article.summary)>0):
+                    val+=.1
+                mipsList.append({'m':ob[0],'c':{'relevance':val,'mentions':mentions,'snippet': snippet, 'quotes': directReferences, 'url':article.url,'summary':article.summary,'keywords':article.keywords,'published date':article.publish_date}})
+      
+        except KeyError:
+        # Key is not present
+            pass
+    response['mips'] = mipsList
+
+    response['radar'] = {'labels':connectorList,'datasets':[{'data':radarData}]}
+
+    #thislist.sort(key=lambda x: x['relevance'], reverse=True)
+    #jsonStr = json.dumps(thislist)
+    return jsonify(response)
 
 def generateSnippet(target, text, closer):
     directReferences = []
@@ -193,11 +189,13 @@ def analyze(resource):
 
 
 def generateMips(articles, firstName, lastName, topics):
+    finalRes = {}
     for article in articles:
         result = mip.getRankedTextFromTopic(article.text, (firstName, lastName), topics, None, lda, dictionary, None)
         for topic in result:
             result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
-    return result
+        finalRes.update(result)
+    return finalRes
    # sent_tokenized = nltk.sent_tokenize(text)
    #return;
 

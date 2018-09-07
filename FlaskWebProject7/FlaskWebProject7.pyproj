@@ -35,8 +35,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="article_merge_corp2.mm" />
-    <Content Include="article_merge_corp2.mm.index" />
     <Content Include="article_merge_dict2.gensim" />
     <Content Include="article_model.gensim" />
     <Content Include="article_model.gensim.expElogbeta.npy" />
