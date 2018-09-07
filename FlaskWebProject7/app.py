@@ -39,8 +39,8 @@ def test():
     article.parse()
     #article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
     #artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
-    list = generateSynonyms(['student_success', 'politic', 'education', 'student', 'success'])   
-    result = mip.getRankedTextFromTopic(article.text, ('John', 'McCain'), list, None, lda, dictionary, None)
+    dict, totalList = generateSynonyms(['student', 'politic', 'education', 'student', 'success'])   
+    result = mip.getRankedTextFromTopic(article.text, ('John', 'McCain'), totalList, None, lda, dictionary, None)
     for topic in result:
         result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
         #result[topic] = [[l, "www"] for l in  [sent[0] for sent in result[topic]]]
@@ -59,28 +59,54 @@ def hello():
 'radar':{'labels':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
 'snippet': 'test message'
 })
-
+# /api/1.0/articles?target=ethan%20Keiser&closing=&connectors=student,success,education&identifiers=startup,edtech
 @app.route('/api/1.0/articles',methods=['GET'])
 def get_articles():
+    response = {}
     target = request.args.get('target')
+
     closing = request.args.get('closing')
     connectorList = []
+    identifiers = []
     try:
         connectorList = request.args.get('connectors').split(",")
+        identifiers = request.args.get('identifiers').split(",")
     except:
         print("split on connector failed");
+
+    targetList = target.split(" ")
+    firstname =''
+    lastname = ''
+
+    if(len(targetList)==2):
+        firstname = targetList[0]
+        lastname = targetList[1]
+    else:
+        firstname = targetList[0]
+
     searchQuery = target
-    for connector in connectorList:
-        searchQuery +=" "+connector
+    for identifier in identifiers:
+        searchQuery +=" "+identifier
+
+    response['target'] = target
+    response['connectors'] = connectorList
+    response['identifiers'] = identifiers
+
+    dict, totalList = generateSynonyms(connectorList)   
+    response['synonym'] = []
+
+    for connector in connectorList :
+       response['synonym'].append({'root': connector, 'syn' : dict[connector]})
+
+
     results = search(searchQuery,num_results=10,news = False)
     results.extend(search(searchQuery,num_results=5,news = True))
     cleanSearchResults(results)
+    articleList = []
+    for l in results:
+        articleList.append(analyze(l[1]))
 
-    alltopics = []
-    for c in connectorList:
-        alltopics.append(generateSynonyms(c))
-
-
+    generateMips(articleList, firstname, lastname,totalList)
 
 
     thislist = []
@@ -175,15 +201,23 @@ def generateMips(articles, firstName, lastName, topics):
    #return;
 
 def generateSynonyms(words):
-    synonyms = []     
     try:
+        result = {}
+        totalSynonyms = []     
         for w in words:
+            synonyms = []     
             for syn in wordnet.synsets(w):
                 for l in syn.lemmas():
-                    synonyms.append(l.name()) 
+                    synonyms.append(l.name().lower())
+                    totalSynonyms.append(l.name().lower())
+            result[w] = list(set(synonyms))
+
+            while w in result[w]: result[w].remove(w)    
+
+
     except Exception as e:
         print(traceback.format_exception(*sys.exc_info()))
-    return list(set(synonyms))
+    return result, list(set(totalSynonyms))
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
     pool = mp.Pool(processes = 1)
