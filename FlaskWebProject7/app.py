@@ -14,13 +14,14 @@ import re
 import sys
 import random
 import mip
-
+from nltk.corpus import wordnet
+   
 import gensim
 import gensim.corpora as corpora
 from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
 from gensim.test.utils import datapath
-
+nltk.download('wordnet')
 nltk.download('punkt')
 app = Flask(__name__)
 
@@ -38,7 +39,8 @@ def test():
     article.parse()
     #article = "Ethan is working on big problem like war, politic, kill. These problems are tough problems, but he never fails."
     #artcle = "Ethan is handsome; although he is a bit crazy. Sometime he walks down the street with Ammy. John is crazy, even though he is smart.Ammy is adorable, and so is Ethan"
-    result = mip.getRankedTextFromTopic(article.text, ('John', 'McCain'), ['student_success', 'politic', 'education', 'student', 'success'], None, lda, dictionary, None)
+    list = generateSynonyms(['student_success', 'politic', 'education', 'student', 'success'])   
+    result = mip.getRankedTextFromTopic(article.text, ('John', 'McCain'), list, None, lda, dictionary, None)
     for topic in result:
         result[topic] = [[l, article.source_url] for l in  [sent[0] for sent in result[topic]]]
         #result[topic] = [[l, "www"] for l in  [sent[0] for sent in result[topic]]]
@@ -54,7 +56,7 @@ def hello():
 'connectors': ['student', 'success','graduation'],
 'synonym':[{'root':'success','syn':['achievement',"accomplishment","winning"]},{'root':'graduation','syn':['commencement','convocation']}],
 'mips':[{'m':'string','c':{'relevance':.92,'mentions':['mention string 1', 'mention string 2'],'snippet': "string", 'quotes': ['quote string 1', 'quote string 2'], 'url':'url string','summary':'summary','keywords':['k1','k2'],'published date':'date'}}],
-'radar':{'label':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
+'radar':{'labels':['s1','s2','s3'],'datasets':[{'data':[51,25,39]}]},
 'snippet': 'test message'
 })
 
@@ -73,6 +75,14 @@ def get_articles():
     results = search(searchQuery,num_results=10,news = False)
     results.extend(search(searchQuery,num_results=5,news = True))
     cleanSearchResults(results)
+
+    alltopics = []
+    for c in connectorList:
+        alltopics.append(generateSynonyms(c))
+
+
+
+
     thislist = []
     notShown = True
     for l in results:
@@ -164,6 +174,16 @@ def generateMips(articles, firstName, lastName, topics):
    # sent_tokenized = nltk.sent_tokenize(text)
    #return;
 
+def generateSynonyms(words):
+    synonyms = []     
+    try:
+        for w in words:
+            for syn in wordnet.synsets(w):
+                for l in syn.lemmas():
+                    synonyms.append(l.name()) 
+    except Exception as e:
+        print(traceback.format_exception(*sys.exc_info()))
+    return list(set(synonyms))
 
 def timeout(func, args = (), kwds = {}, timeout = 1, default = None):
     pool = mp.Pool(processes = 1)
