@@ -70,7 +70,7 @@ def containsTarget(sent, firstName, lastName):
   return lower.find(first_lower) >= 0 or (last_lower != None and lower.find(last_lower) >= 0)
 
 def getWordSimilarity(word1, word2, pos='n'):
-  if (nltk.edit_distance(word1, word2)) < 2:
+  if (nltk.edit_distance(word1.lower(), word2.lower())) < 2:
       return 1
   return 0
 
